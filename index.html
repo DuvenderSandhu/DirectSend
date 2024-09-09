@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile to PC Data Transfer App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            flex: 1;
+            padding-bottom: 80px; /* Space for the fixed footer */
+        }
+        .card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .textarea-style {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .error {
+            border-color: red;
+        }
+        .fixed-footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 700px;
+            background-color: #fff;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .fixed-footer input,
+        .fixed-footer button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-10">
+        <h1 class="text-3xl font-bold text-center">Mobile to PC Data Transfer</h1>
+
+        <!-- Display Data Section -->
+        <div id="dataDisplay" class="card mt-6">
+            <h2 class="text-xl font-semibold mb-4">Current Data:</h2>
+            <div id="displayData" class="text-gray-800">
+                <!-- Data will be rendered here -->
+                Fetching data...
+            </div>
+        </div>
+
+        <!-- Feedback Section -->
+        <div id="feedback" class="text-center mt-4 text-green-600 hidden">
+            Data processed successfully!
+        </div>
+    </div>
+
+    <!-- Fixed Footer -->
+    <div class="fixed-footer">
+        <!-- Select Box for ID -->
+        <input id="boxNumber" type="number" min="1" class="w-20 p-2 border rounded" placeholder="ID">
+
+        <!-- Textarea for message -->
+        <textarea id="message" class="textarea-style w-full" placeholder="Type your message here..." rows="2"></textarea>
+
+        <!-- Action Buttons -->
+        <button id="sendButton" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            Send
+        </button>
+        <button id="createButton" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
+            Create
+        </button>
+    </div>
+
+    <script>
+        // Function to render the data
+        function renderData(dataArray) {
+            const displayDataDiv = document.getElementById('displayData');
+            displayDataDiv.innerHTML = ''; // Clear previous data
+
+            dataArray.forEach(item => {
+                // Create a card for each object in the array
+                const card = document.createElement('div');
+                card.className = 'border p-4 mb-4 rounded shadow-lg bg-white data-card';
+                card.setAttribute('data-id', item.id); // Adding an attribute to easily find this card later
+
+                const idText = document.createElement('p');
+                idText.className = 'text-gray-600';
+                idText.textContent = `ID: ${item.id}`;
+
+                const dataText = document.createElement('p');
+                dataText.className = 'text-xl font-bold';
+                dataText.textContent = `Data: ${item.data}`;
+
+                // Create and append delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.className = 'mt-2 bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600';
+                deleteButton.addEventListener('click', () => deleteData(item.id));
+
+                // Append the ID and Data info to the card
+                card.appendChild(idText);
+                card.appendChild(dataText);
+                card.appendChild(deleteButton);
+
+                // Append each card to the main display section
+                displayDataDiv.appendChild(card);
+            });
+        }
+
+        // Fetch data from API and render it
+        async function fetchData() {
+            try {
+                const response = await fetch('https://66bdee3f74dfc195586e122b.mockapi.io/api/Data'); // Replace with your actual API
+                const data = await response.json();
+                renderData(data);
+            } catch (error) {
+                document.getElementById('displayData').textContent = 'Error fetching data';
+            }
+        }
+
+        // Send data to API and validate selected box ID
+        async function sendData() {
+            const message = document.getElementById('message').value;
+            const boxNumber = document.getElementById('boxNumber').value;
+
+            if (!message) {
+                alert("Please enter a message.");
+                return;
+            }
+
+            const selectedCard = document.querySelector(`.data-card[data-id='${boxNumber}']`);
+            if (!selectedCard) {
+                document.getElementById('boxNumber').classList.add('error');
+                alert(`Box with ID ${boxNumber} doesn't exist.`);
+                return;
+            } else {
+                document.getElementById('boxNumber').classList.remove('error');
+            }
+
+            try {
+                const response = await fetch(`https://66bdee3f74dfc195586e122b.mockapi.io/api/Data/${boxNumber}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: message })
+                });
+
+                const result = await response.json();
+                renderData(result);
+
+                document.getElementById('feedback').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('feedback').classList.add('hidden');
+                }, 3000);
+
+                document.getElementById('message').value = '';
+            } catch (error) {
+                alert('Error sending data');
+            }
+            fetchData();
+        }
+
+        // Create new data
+        async function createData() {
+            const newData = document.getElementById('message').value;
+
+            if (!newData) {
+                alert("Please enter new data.");
+                return;
+            }
+
+            try {
+                const response = await fetch('https://66bdee3f74dfc195586e122b.mockapi.io/api/Data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: newData })
+                });
+
+                const result = await response.json();
+                renderData(result);
+
+                document.getElementById('feedback').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('feedback').classList.add('hidden');
+                }, 3000);
+
+                document.getElementById('message').value = '';
+            } catch (error) {
+                alert('Error creating data');
+            }
+            fetchData();
+        }
+
+        // Delete data
+        async function deleteData(id) {
+            try {
+                await fetch(`https://66bdee3f74dfc195586e122b.mockapi.io/api/Data/${id}`, {
+                    method: 'DELETE'
+                });
+
+                fetchData(); // Refresh the data display
+            } catch (error) {
+                alert('Error deleting data');
+            }
+        }
+
+        // Add event listener to send button
+        document.getElementById('sendButton').addEventListener('click', sendData);
+
+        // Add event listener to create button
+        document.getElementById('createButton').addEventListener('click', createData);
+
+        // Load initial data
+        fetchData();
+    </script>
+</body>
+</html>

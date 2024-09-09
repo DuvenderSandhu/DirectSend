@@ -43,17 +43,37 @@
             transform: translateX(-50%);
             width: 90%;
             max-width: 700px;
-            background-color: #fff;
+            background-color: #ffffff;
             box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
             padding: 10px;
             border-radius: 10px;
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
+            align-items: center;
+            z-index: 10;
         }
         .fixed-footer input,
         .fixed-footer button {
-            margin-right: 10px;
+            margin: 0;
+        }
+        @media (max-width: 640px) {
+            .fixed-footer {
+                width: 100%;
+                max-width: none;
+                padding: 8px;
+            }
+            .fixed-footer textarea {
+                width: calc(100% - 100px); /* Adjust width to fit with buttons on smaller screens */
+                margin-bottom: 10px;
+            }
+            .fixed-footer input {
+                width: 60px;
+            }
+            .fixed-footer button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
         }
     </style>
 </head>
@@ -79,10 +99,10 @@
     <!-- Fixed Footer -->
     <div class="fixed-footer">
         <!-- Select Box for ID -->
-        <input id="boxNumber" type="number" min="1" class="w-20 p-2 border rounded" placeholder="ID">
+        <input id="boxNumber" type="number" min="1" class="p-2 border rounded" placeholder="ID">
 
         <!-- Textarea for message -->
-        <textarea id="message" class="textarea-style w-full" placeholder="Type your message here..." rows="2"></textarea>
+        <textarea id="message" class="textarea-style" placeholder="Type your message here..." rows="2"></textarea>
 
         <!-- Action Buttons -->
         <button id="sendButton" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
